@@ -1,0 +1,117 @@
+﻿@page "/create-quiz"
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<h3>CreateQuiz</h3>
+
+<EditForm Model="@quiz" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="title">Title</label>
+        <InputText id="title" class="form-control" @bind-Value="quiz.Title" />
+    </div>
+
+    <h4>Questions</h4>
+    @foreach (var question in quiz.Questions)
+    {
+        <div class="form-group">
+            <label>Question Text</label>
+            <InputText class="form-control" @bind-Value="question.Text" />
+
+            <label>Media URL</label>
+            <InputText class="form-control" @bind-Value="question.MediaUrl" />
+
+            <label>Video?</label>
+            <InputCheckbox @bind-Value="question.IsVideo" />
+            <br />
+            <label>Time Limit (seconds)</label>
+            <InputNumber class="form-control" @bind-Value="question.TimeLimitSeconds" />
+
+            <label>Question Type</label>
+            <InputSelect class="form-control" @bind-Value="question.QuestionType">
+                <option value="MultipleChoice">Multiple Choice</option>
+                <option value="FreeText">Free Text</option>
+            </InputSelect>
+
+            @if (question.QuestionType == Shared.QuestionType.FreeText)
+            {
+                <div class="form-group">
+                    <label>Correct Answer</label>
+                    <InputText class="form-control" @bind-Value="question.AnswerOptions[0].Text" />
+                </div>
+            }
+            else if (question.QuestionType == Shared.QuestionType.MultipleChoice)
+            {
+                <h5>Answer Options</h5>
+                @foreach (var option in question.AnswerOptions)
+                {
+                    <div class="form-group">
+                        <label>Option Text</label>
+                        <InputText class="form-control" @bind-Value="option.Text" />
+                        <label>Is Correct?</label>
+                        <InputCheckbox @bind-Value="option.IsCorrect" />
+                    </div>
+                }
+                <button type="button" class="btn btn-secondary" @onclick="() => AddAnswerOption(question)">Add Option</button>
+            }
+        </div>
+    }
+    <button type="button" class="btn btn-secondary" @onclick="AddQuestion">Add Question</button>
+    <br />
+    <button type="submit" class="btn btn-primary">Create Quiz</button>
+</EditForm>
+
+@code {
+    private QuizDto quiz = new QuizDto
+    {
+       Questions = new List<QuestionDto>()
+    };
+
+    private async Task HandleValidSubmit()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("Account/Login");
+            return;
+        }
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/quiz/new", quiz);
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/profile");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.Error.WriteLine(errorContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+
+    private void AddQuestion()
+    {
+        quiz.Questions.Add(new QuestionDto
+            {
+                AnswerOptions = new List<AnswerOptionDto>()
+            });
+    }
+
+    private void AddAnswerOption(QuestionDto question)
+    {
+        question.AnswerOptions.Add(new AnswerOptionDto());
+    }
+}

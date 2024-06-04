@@ -1,0 +1,56 @@
+﻿@page "/profile"
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<h1>Profile</h1>
+
+<h3>Your Quizzes</h3>
+
+@if (quizzes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!quizzes.Any())
+{
+    <p>You have not created any quizzes yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var quiz in quizzes)
+            {
+                <tr>
+                    <td>@quiz.Title</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    private List<QuizDto> quizzes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("authentication/login");
+            return;
+        }
+
+        quizzes = await Http.GetFromJsonAsync<List<QuizDto>>("api/quiz/userquizzes");
+    }
+
+}

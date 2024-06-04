@@ -1,4 +1,4 @@
-﻿namespace QuizzyDizzy.Models
+﻿namespace QuizzyDizzy.Shared
 {
     public enum QuestionType
     {

@@ -1,0 +1,48 @@
+﻿@page "/quizzes"
+@inject HttpClient Http
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<PageTitle>Quizzes</PageTitle>
+
+<h1>Quizzes</h1>
+
+<p>Take a quiz and collect points!</p>
+
+@if (quizzes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var quiz in quizzes)
+            {
+                <tr>
+                    <td>@quiz.Title</td>
+                    <td><button>Play</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+@code {
+
+    private List<QuizDto> quizzes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+
+        var result = await Http.GetFromJsonAsync<List<QuizDto>>("api/quiz");
+        if (result != null)
+            quizzes = result;
+    }
+}
