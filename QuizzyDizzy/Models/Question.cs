@@ -1,4 +1,4 @@
-﻿using QuizzyDizzy.Shared;
+﻿using QuizzyDizzy.Shared.Enums;
 namespace QuizzyDizzy.Models
 {
     public class Question

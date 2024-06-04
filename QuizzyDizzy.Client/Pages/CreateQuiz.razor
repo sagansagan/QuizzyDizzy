@@ -37,14 +37,14 @@
                 <option value="FreeText">Free Text</option>
             </InputSelect>
 
-            @if (question.QuestionType == Shared.QuestionType.FreeText)
+            @if (question.QuestionType == QuestionType.FreeText)
             {
                 <div class="form-group">
                     <label>Correct Answer</label>
                     <InputText class="form-control" @bind-Value="question.AnswerOptions[0].Text" />
                 </div>
             }
-            else if (question.QuestionType == Shared.QuestionType.MultipleChoice)
+            else if (question.QuestionType == QuestionType.MultipleChoice)
             {
                 <h5>Answer Options</h5>
                 @foreach (var option in question.AnswerOptions)

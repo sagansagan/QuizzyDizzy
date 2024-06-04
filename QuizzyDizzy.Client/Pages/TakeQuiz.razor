@@ -1,0 +1,200 @@
+﻿@page "/take-quiz/{quizId:int}"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<PageTitle>Take Quiz</PageTitle>
+
+<h1>@quiz?.Title</h1>
+
+@if (quiz == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!isQuizInProgress)
+{
+    <button class="btn btn-primary" @onclick="StartQuiz">Start Quiz</button>
+}
+else
+{
+    <div>
+        <h3>Time remaining: @timeRemaining seconds</h3>
+        <EditForm Model="currentAnswer">
+            <h3>@currentQuestion?.Text</h3>
+            @if (!string.IsNullOrEmpty(currentQuestion?.MediaUrl))
+            {
+                @if (currentQuestion.IsVideo)
+                {
+                    <video src="@currentQuestion.MediaUrl" controls class="img-fluid"></video>
+                }
+                else
+                {
+                    <img src="@currentQuestion.MediaUrl" alt="Question Media" class="img-fluid" />
+                }
+            }
+
+            @if (currentQuestion?.QuestionType == QuestionType.MultipleChoice)
+            {
+                @foreach (var option in currentQuestion.AnswerOptions)
+                {
+                    <div>
+                        <input type="checkbox" @bind="selectedOptions[option.Id]" />
+                        <label>@option.Text</label>
+                    </div>
+                }
+            }
+            else
+            {
+                <InputTextArea @bind-Value="currentAnswer.Text" class="form-control" />
+            }
+
+            <button type="button" class="btn btn-primary" @onclick="NextQuestion">Next</button>
+        </EditForm>
+    </div>
+    
+}
+
+@code {
+    [Parameter]
+    public int QuizId { get; set; }
+
+    private QuizDto quiz;
+    private bool isQuizInProgress = false;
+    private int currentQuestionIndex = 0;
+    private QuestionDto currentQuestion;
+    private AnswerDto currentAnswer;
+    private Dictionary<int, bool> selectedOptions = new(); //för att veta vilket svarsalternativ som är markerat
+    private int timeRemaining;
+    private System.Timers.Timer timer;
+    private List<AnswerDto> userAnswers = new();
+    private bool isSubmitting = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        quiz = await Http.GetFromJsonAsync<QuizDto>($"api/quiz/{QuizId}");
+        if (quiz != null && quiz.Questions.Any())
+        {
+            currentQuestion = quiz.Questions[currentQuestionIndex];
+            InitializeCurrentAnswer();
+        }
+    }
+
+    private void StartQuiz()
+    {
+        isQuizInProgress = true;
+        StartTimer();
+    }
+
+    private void InitializeCurrentAnswer()
+    {
+        currentAnswer = new AnswerDto
+            {
+                QuestionId = currentQuestion.Id,
+                Text = string.Empty
+            };
+
+        selectedOptions.Clear();
+        foreach (var option in currentQuestion.AnswerOptions)
+        {
+            selectedOptions[option.Id] = false;
+        }
+
+        timeRemaining = currentQuestion.TimeLimitSeconds;
+    }
+
+    private void StartTimer()
+    {
+        timer = new System.Timers.Timer(1000);
+        timer.Elapsed += TimerElapsed;
+        timer.Start();
+    }
+
+    private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        if (timeRemaining > 0)
+        {
+            timeRemaining--;
+            InvokeAsync(StateHasChanged);
+        }
+        else
+        {
+            timer.Stop();
+            InvokeAsync(NextQuestion);
+        }
+    }
+
+    private void NextQuestion()
+    {
+        if (isSubmitting || !isQuizInProgress) return; // Förhindra flera submissioner samtidigt
+
+        isSubmitting = true;
+        Console.WriteLine("Submitting answer...");
+
+        // Sparar svar
+        if (currentQuestion.QuestionType == QuestionType.MultipleChoice)
+        {
+            currentAnswer.Text = string.Join(",", selectedOptions.Where(o => o.Value).Select(o => o.Key.ToString()));
+        }
+
+        // Add the current answer to the quiz result
+        userAnswers.Add(currentAnswer);
+
+        // Move to the next question or finish the quiz
+        if (currentQuestionIndex < quiz.Questions.Count - 1)
+        {
+            currentQuestionIndex++;
+            currentQuestion = quiz.Questions[currentQuestionIndex];
+            InitializeCurrentAnswer();
+            StartTimer();
+            isSubmitting = false;
+        }
+        else
+        {
+            // Finish the quiz
+            isQuizInProgress = false;
+            var quizResult = new QuizResultDto
+            {
+                QuizId = quiz.Id,
+                Answers = userAnswers
+            };
+
+            SubmitQuizResults(quizResult);
+        }
+    }
+
+    private async void SubmitQuizResults(QuizResultDto quizResult)
+    {
+        try
+        {
+            var result = await Http.PostAsJsonAsync("api/quizresults", quizResult);
+
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Quiz results submitted successfully.");
+                // Navigation.NavigateTo("/quizzes");
+            }
+            else
+            {
+                Console.WriteLine($"Error submitting quiz results: {result.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception submitting quiz results: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+
+    private void HandleCheckboxChange(int optionId, ChangeEventArgs e)
+    {
+        if (bool.TryParse(e.Value.ToString(), out var isChecked))
+        {
+            selectedOptions[optionId] = isChecked;
+        }
+    }
+}
+

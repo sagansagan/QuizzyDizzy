@@ -24,7 +24,7 @@ namespace QuizzyDizzy.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<QuizDto>>> GetAllQuizzes()
         {
-            var quizzes = await _context.Quizzes.Select(x => new QuizDto { Title = x.Title }).ToListAsync();
+            var quizzes = await _context.Quizzes.Select(x => new QuizDto { Id = x.Id ,Title = x.Title }).ToListAsync();
             return Ok(quizzes);
         }
 

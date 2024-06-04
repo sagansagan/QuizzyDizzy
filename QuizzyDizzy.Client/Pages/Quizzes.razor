@@ -1,5 +1,6 @@
 ﻿@page "/quizzes"
 @inject HttpClient Http
+@inject NavigationManager Navigation
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 <PageTitle>Quizzes</PageTitle>
@@ -25,7 +26,7 @@ else
             {
                 <tr>
                     <td>@quiz.Title</td>
-                    <td><button>Play</button></td>
+                    <td><button @onclick="() => NavigateToQuiz(quiz.Id)">Play</button></td>
                 </tr>
             }
         </tbody>
@@ -44,5 +45,10 @@ else
         var result = await Http.GetFromJsonAsync<List<QuizDto>>("api/quiz");
         if (result != null)
             quizzes = result;
+    }
+
+    private void NavigateToQuiz(int quizId)
+    {
+        Navigation.NavigateTo($"/take-quiz/{quizId}");
     }
 }
