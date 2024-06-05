@@ -25,7 +25,7 @@ else
             {
                 @if (currentQuestion.IsVideo)
                 {
-                    <video src="@currentQuestion.MediaUrl" controls class="img-fluid"></video>
+                    <iframe src="@GetEmbedUrl(currentQuestion.MediaUrl)" width="600" height="400" frameborder="0" ></iframe>
                 }
                 else
                 {
@@ -195,6 +195,16 @@ else
         {
             selectedOptions[optionId] = isChecked;
         }
+    }
+
+    private string GetEmbedUrl(string url)
+    {
+        if (url.Contains("youtube.com/watch"))
+        {
+            var videoId = url.Split("v=")[1].Split('&')[0];
+            return $"https://www.youtube.com/embed/{videoId}";
+        }
+        return url;
     }
 }
 
