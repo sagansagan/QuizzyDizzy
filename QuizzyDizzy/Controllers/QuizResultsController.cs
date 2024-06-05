@@ -6,6 +6,7 @@ using QuizzyDizzy.Models;
 using QuizzyDizzy.Shared.DTOs;
 using System.Security.Claims;
 using QuizzyDizzy.Shared.Enums;
+using Microsoft.AspNetCore.Authorization;
 
 namespace QuizzyDizzy.Controllers
 {
@@ -21,7 +22,7 @@ namespace QuizzyDizzy.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<int>> SubmitQuiz([FromBody] QuizResultDto result)
+        public async Task<ActionResult<int>> SubmitQuiz([FromBody] QuizSubmitDto result)
         {
             if (result == null)
             {
@@ -77,6 +78,52 @@ namespace QuizzyDizzy.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(score);
+        }
+
+        [Authorize]
+        [HttpGet("{quizId}")]
+        public async Task<ActionResult<List<QuizResultDto>>> GetQuizResults(int quizId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var quiz = await _context.Quizzes
+                .FirstOrDefaultAsync(q => q.Id == quizId && q.CreatedByUserId == userId);
+
+            if (quiz == null)
+            {
+                return Forbid(); // Return 403 Forbidden om user inte är skaparen
+            }
+
+            var results = await _context.QuizResults
+                .Where(qr => qr.QuizId == quizId)
+                .Select(qr => new QuizResultDto
+                {
+                    QuizId = qr.QuizId,
+                    UserId = qr.UserId,
+                    Score = qr.Score,
+                    UserName = _context.Users.FirstOrDefault(u => u.Id == qr.UserId).UserName
+                })
+                .ToListAsync();
+
+            return Ok(results);
+        }
+
+        [HttpGet("user-scores")]
+        public async Task<ActionResult<List<QuizResultDto>>> GetUserScores()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var scores = await _context.QuizResults
+                .Where(qr => qr.UserId == userId)
+                .Select(qr => new QuizResultDto
+                {
+                    QuizId = qr.QuizId,
+                    QuizTitle = qr.Quiz.Title,
+                    Score = qr.Score
+                })
+                .ToListAsync();
+
+            return Ok(scores);
         }
 
     }

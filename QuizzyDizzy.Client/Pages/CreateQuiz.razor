@@ -32,7 +32,7 @@
             <InputNumber class="form-control" @bind-Value="question.TimeLimitSeconds" />
 
             <label>Question Type</label>
-            <InputSelect class="form-control" @bind-Value="question.QuestionType">
+            <InputSelect class="form-control" @bind-Value="question.QuestionType" @onchange="() => OnQuestionTypeChanged(question)">
                 <option value="MultipleChoice">Multiple Choice</option>
                 <option value="FreeText">Free Text</option>
             </InputSelect>
@@ -106,12 +106,33 @@
     {
         quiz.Questions.Add(new QuestionDto
             {
-                AnswerOptions = new List<AnswerOptionDto>()
+                Text = string.Empty,
+                QuestionType = QuestionType.FreeText, // Default to FreeText
+                AnswerOptions = new List<AnswerOptionDto> { new AnswerOptionDto() } // Ensure there's always one answer option for FreeText
             });
     }
 
     private void AddAnswerOption(QuestionDto question)
     {
         question.AnswerOptions.Add(new AnswerOptionDto());
+    }
+
+    private void OnQuestionTypeChanged(QuestionDto question)
+    {
+        if (question.QuestionType == QuestionType.FreeText)
+        {
+            if (question.AnswerOptions.Count != 1)
+            {
+                question.AnswerOptions.Clear();
+                question.AnswerOptions.Add(new AnswerOptionDto());
+            }
+        }
+        else if (question.QuestionType == QuestionType.MultipleChoice)
+        {
+            if (question.AnswerOptions.Count == 1 && string.IsNullOrWhiteSpace(question.AnswerOptions[0].Text))
+            {
+                question.AnswerOptions.Clear();
+            }
+        }
     }
 }

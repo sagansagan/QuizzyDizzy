@@ -152,17 +152,17 @@ else
         {
             // Finish the quiz
             isQuizInProgress = false;
-            var quizResult = new QuizResultDto
+            var quizResult = new QuizSubmitDto
             {
-                QuizId = quiz.Id,
-                Answers = userAnswers
+                    QuizId = quiz.Id,
+                    Answers = userAnswers
             };
 
             SubmitQuizResults(quizResult);
         }
     }
 
-    private async void SubmitQuizResults(QuizResultDto quizResult)
+    private async void SubmitQuizResults(QuizSubmitDto quizResult)
     {
         try
         {

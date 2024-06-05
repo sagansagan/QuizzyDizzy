@@ -56,7 +56,7 @@ namespace QuizzyDizzy.Controllers
 
             var userQuizzes = _context.Quizzes
                 .Where(u => u.CreatedByUserId == userId)
-                .Select(q => new QuizDto { Title = q.Title })
+                .Select(q => new QuizDto { Id = q.Id, Title = q.Title})
                 .ToList();
 
             return userQuizzes;

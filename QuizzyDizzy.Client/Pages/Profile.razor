@@ -29,15 +29,49 @@ else
             {
                 <tr>
                     <td>@quiz.Title</td>
+                    <button @onclick="() => ViewResults(quiz.Id)" class="btn btn-primary">Statistics</button>
                 </tr>
             }
         </tbody>
     </table>
 }
 
+<h3>Your Quiz Scores</h3>
+
+@if (userScores == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!userScores.Any())
+{
+    <p>You have not taken any quizzes yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Quiz Title</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var score in userScores)
+            {
+                <tr>
+                    <td>@score.QuizTitle</td>
+                    <td>@score.Score</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
 @code {
 
     private List<QuizDto> quizzes;
+    private List<QuizResultDto> userScores;
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,11 +80,17 @@ else
 
         if (!user.Identity.IsAuthenticated)
         {
-            Navigation.NavigateTo("authentication/login");
+            Navigation.NavigateTo("Account/Login");
             return;
         }
 
         quizzes = await Http.GetFromJsonAsync<List<QuizDto>>("api/quiz/userquizzes");
+        userScores = await Http.GetFromJsonAsync<List<QuizResultDto>>("api/quizresults/user-scores");
+    }
+
+    private void ViewResults(int quizId)
+    {
+        Navigation.NavigateTo($"/quiz-results/{quizId}");
     }
 
 }

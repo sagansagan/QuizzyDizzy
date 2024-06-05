@@ -1,0 +1,60 @@
+﻿@page "/quiz-results/{quizId:int}"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<PageTitle>QuizResults</PageTitle>
+
+<h3>Quiz Results</h3>
+
+@if (results == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!results.Any())
+{
+    <p>No results available for this quiz.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var result in results)
+            {
+                <tr>
+                    <td>@result.UserName</td>
+                    <td>@result.Score</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public int QuizId { get; set; }
+
+    private List<QuizResultDto> results;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("Account/Login");
+            return;
+        }
+
+        results = await Http.GetFromJsonAsync<List<QuizResultDto>>($"api/quizresults/{QuizId}");
+    }
+
+}
