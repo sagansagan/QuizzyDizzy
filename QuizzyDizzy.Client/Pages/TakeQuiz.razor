@@ -5,53 +5,62 @@
 
 <PageTitle>Take Quiz</PageTitle>
 
-<h1>@quiz?.Title</h1>
+<div class="d-flex flex-column align-items-center justify-content-center vh-100">
+    <h1>@quiz?.Title</h1>
 
-@if (quiz == null)
-{
-    <p><em>Loading...</em></p>
-}
-else if (!isQuizInProgress)
-{
-    <button class="btn btn-primary" @onclick="StartQuiz">Start Quiz</button>
-}
-else
-{
-    <div>
-        <h3>Time remaining: @timeRemaining seconds</h3>
-        <EditForm Model="currentAnswer">
-            <h3>@currentQuestion?.Text</h3>
-            @if (!string.IsNullOrEmpty(currentQuestion?.MediaUrl))
-            {
-                @if (currentQuestion.IsVideo)
+    @if (quiz == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (!isQuizInProgress)
+    {
+        <button class="btn btn-primary" @onclick="StartQuiz">Start Quiz</button>
+    }
+    else
+    {
+        <div class="card p-4 shadow-sm" style="width: 100%; max-width: 600px;">
+            <h3>Time remaining: <span class="text-danger">@timeRemaining</span> seconds</h3>
+            <EditForm Model="currentAnswer">
+                <h3>@currentQuestion?.Text</h3>
+                @if (!string.IsNullOrEmpty(currentQuestion?.MediaUrl))
                 {
-                    <iframe src="@GetEmbedUrl(currentQuestion.MediaUrl)" width="600" height="400" frameborder="0" ></iframe>
+                    @if (currentQuestion.IsVideo)
+                    {
+                        <div class="mb-3">
+                            <iframe src="@GetEmbedUrl(currentQuestion.MediaUrl)" class="embed-responsive-item" width="100%" height="400" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <img src="@currentQuestion.MediaUrl" alt="Question Media" class="img-fluid" />
+                        </div>
+                    }
+                }
+
+                @if (currentQuestion?.QuestionType == QuestionType.MultipleChoice)
+                {
+                    @foreach (var option in currentQuestion.AnswerOptions)
+                    {
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" @bind="selectedOptions[option.Id]" />
+                            <label class="form-check-label">@option.Text</label>
+                        </div>
+                    }
                 }
                 else
                 {
-                    <img src="@currentQuestion.MediaUrl" alt="Question Media" class="img-fluid" />
-                }
-            }
-
-            @if (currentQuestion?.QuestionType == QuestionType.MultipleChoice)
-            {
-                @foreach (var option in currentQuestion.AnswerOptions)
-                {
-                    <div>
-                        <input type="checkbox" @bind="selectedOptions[option.Id]" />
-                        <label>@option.Text</label>
+                    <div class="form-group">
+                        <InputTextArea @bind-Value="currentAnswer.Text" class="form-control" />
                     </div>
                 }
-            }
-            else
-            {
-                <InputTextArea @bind-Value="currentAnswer.Text" class="form-control" />
-            }
 
-            <button type="button" class="btn btn-primary" @onclick="NextQuestion">Next</button>
-        </EditForm>
-    </div>
-    
+                <button type="button" class="btn btn-primary mt-3" @onclick="NextQuestion">Next</button>
+            </EditForm>
+        </div>
+    }
+</div>
+
 }
 
 @code {

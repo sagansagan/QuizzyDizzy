@@ -12,13 +12,14 @@
 
     <div class="form-group">
         <label for="title">Title</label>
-        <InputText id="title" class="form-control" @bind-Value="quiz.Title" />
+        <InputText id="title" class="form-control mb-3" @bind-Value="quiz.Title" />
     </div>
 
     <h4>Questions</h4>
     @foreach (var question in quiz.Questions)
     {
-        <div class="form-group">
+        <div class="form-group mb-3">
+            <br />
             <label>Question Text</label>
             <InputText class="form-control" @bind-Value="question.Text" />
 
@@ -60,7 +61,7 @@
             }
         </div>
     }
-    <button type="button" class="btn btn-secondary" @onclick="AddQuestion">Add Question</button>
+    <button type="button" class="btn btn-secondary mb-3 mt-3" @onclick="AddQuestion">Add Question</button>
     <br />
     <button type="submit" class="btn btn-primary">Create Quiz</button>
 </EditForm>
