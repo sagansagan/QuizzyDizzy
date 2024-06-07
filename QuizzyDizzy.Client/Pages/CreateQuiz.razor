@@ -15,7 +15,7 @@
         <InputText id="title" class="form-control mb-3" @bind-Value="quiz.Title" />
     </div>
 
-    <h4>Questions</h4>
+    <h4>Questions:</h4>
     @foreach (var question in quiz.Questions)
     {
         <div class="form-group mb-3">
@@ -63,7 +63,10 @@
     }
     <button type="button" class="btn btn-secondary mb-3 mt-3" @onclick="AddQuestion">Add Question</button>
     <br />
-    <button type="submit" class="btn btn-primary">Create Quiz</button>
+    @if (quiz.Questions.Count > 0)
+    {
+        <button type="submit" class="btn btn-primary">Create Quiz</button>
+    }
 </EditForm>
 
 @code {
